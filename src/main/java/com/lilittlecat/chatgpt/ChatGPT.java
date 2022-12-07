@@ -169,7 +169,7 @@ public class ChatGPT {
             }
             return partSix(state, null);
         } else {
-            throw new RuntimeException("[OpenAI][3] Failed to make the request, Try that again!");
+            throw new RuntimeException("[OpenAI][5] Failed to make the request, Try that again!");
         }
     }
 
