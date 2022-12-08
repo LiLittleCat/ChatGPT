@@ -114,7 +114,7 @@ public class ChatGPT {
                 throw new RuntimeException("Couldn't get correct response, please try again.");
             }
             String data = "{" + strings[strings.length - 1] + "}";
-            System.out.println("Response: " + data);
+//            System.out.println("Response: " + data);
             JsonObject jsonObject = gson.fromJson(data, JsonObject.class);
             this.conversationId = jsonObject.get("conversation_id").toString();
             this.parentMessageId = jsonObject.getAsJsonObject("message").get("id").toString();
@@ -170,7 +170,7 @@ public class ChatGPT {
                     .asJson();
             if (response.isSuccess()) {
                 String accessToken = (String) response.getBody().getObject().get(accessTokenString);
-                System.out.println("Get accessToken: " + accessToken);
+//                System.out.println("Get accessToken: " + accessToken);
                 accessTokenCache.put(accessTokenString, accessToken);
                 return accessToken;
             } else {
