@@ -1,17 +1,21 @@
 package com.lilittlecat.chatgpt;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import kong.unirest.HttpResponse;
-import kong.unirest.HttpStatus;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
+import net.jodah.expiringmap.ExpiringMap;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
  * A Java client for the unofficial ChatGPT API.
- * todo handle captcha when get access token
  * </p>
  *
  * @author LiLittleCat
@@ -20,266 +24,161 @@ import java.util.regex.Pattern;
  */
 public class ChatGPT {
 
-    private String email;
-    private String password;
-    private Boolean useProxy;
-    private String proxy;
-    private String accessToken;
+    private String sessionToken;
 
-    public ChatGPT(String email, String password) {
-        this(email, password, false, null);
+    private String conversationId;
+
+    private String parentMessageId;
+
+    public String getSessionToken() {
+        return sessionToken;
     }
 
-    public ChatGPT(String email, String password, Boolean useProxy, String proxy) {
-        this.email = email;
-        this.password = password;
+    public void setSessionToken(String sessionToken) {
+        this.sessionToken = sessionToken;
+    }
+
+    private String accessTokenString = "accessToken";
+    private String conversationUrl = "https://chat.openai.com/backend-api/conversation";
+    private String sessionUrl = "https://chat.openai.com/api/auth/session";
+    private String cookieName = "__Secure-next-auth.session-token";
+    private String userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15";
+
+    /**
+     * create an instance
+     *
+     * @param sessionToken   sessionToken
+     * @param conversationId optional ID of a conversation to continue
+     * @param useProxy       use proxy ro not
+     * @param proxy          proxy
+     * @param port           proxy  port
+     * @param username       proxy username
+     * @param password       proxy password
+     */
+    public ChatGPT(String sessionToken, String conversationId, boolean useProxy, String proxy, Integer port, String username, String password) {
+        this.sessionToken = sessionToken;
+        if (conversationId == null) {
+            this.conversationId = UUID.randomUUID().toString();
+        } else {
+            this.conversationId = conversationId;
+        }
+        parentMessageId = UUID.randomUUID().toString();
         if (useProxy) {
-            this.proxy = proxy;
+            Unirest.config().proxy(proxy, port, username, password);
         }
+        refreshAndGetAccessToken();
     }
 
-    public boolean tokenExpired() {
-        return false;
+    public ChatGPT(String sessionToken) {
+        this(sessionToken, null, false, null, null, null, null);
     }
 
-    public String getAccessToken() {
-        return "";
+    public ChatGPT(String sessionToken, String conversationId) {
+        this(sessionToken, conversationId, false, null, null, null, null);
     }
+
+    public ChatGPT(String sessionToken, boolean useProxy, String proxy, Integer port) {
+        this(sessionToken, null, useProxy, proxy, port, null, null);
+    }
+
 
     /**
-     * Begin the auth process
-     *
-     * @return
+     * access token cache, when it's expire, get a new one
      */
-    public String createAccessToken() {
-        HttpResponse<JsonNode> response = Unirest.get("https://chat.openai.com/auth/login")
-//                .header("Host", "ask.openai.com")
-//                .header("Accept", "*/*")
-                .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15")
-//                .header("Accept-Language", "en-GB,en-US;q=0.9,en;q=0.8")
-//                .header("Accept-Encoding", "gzip, deflate, br")
-//                .header("Connection", "keep-alive")
-                .asJson();
-        if (response.getStatus() == HttpStatus.OK) {
-            return partTwo();
-        } else {
-            throw new RuntimeException("[OpenAI][1] Failed to make the request, Try that again!");
-        }
-    }
+    private final Map<String, String> accessTokenCache = ExpiringMap.builder()
+            .expiration(60, TimeUnit.SECONDS).build();
+
+    private final Gson gson = new Gson();
 
     /**
-     * In part two, We make a request to https://chat.openai.com/api/auth/csrf and grab a fresh csrf token
+     * ask ChatGPT for answer
      *
+     * @param input
      * @return
      */
-    private String partTwo() {
-        HttpResponse<JsonNode> response = Unirest.get("https://chat.openai.com/api/auth/csrf")
-//                .header("Host", "ask.openai.com")
-                .header("Accept", "*/*")
-                .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15")
-//                .header("Accept-Language", "en-GB,en-US;q=0.9,en;q=0.8")
-//                .header("Accept-Encoding", "gzip, deflate, br")
-//                .header("Connection", "keep-alive")
-//                .header("Referer", "https://chat.openai.com/auth/login")
-                .asJson();
-        if (response.getStatus() == HttpStatus.OK) {
-            String csrfToken = ((String) response.getBody().getObject().get("csrfToken"));
-            System.out.println("csrfToken: " + csrfToken);
-            return partThree(csrfToken);
-        } else {
-            throw new RuntimeException("[OpenAI][2] Failed to make the request, Try that again!");
-        }
-    }
-
-    /**
-     * We reuse the token from part to make a request to /api/auth/signin/auth0?prompt=login
-     *
-     * @param token
-     * @return
-     */
-    private String partThree(String token) {
-        String payload = "callbackUrl=%2F&csrfToken=" + token + "&json=true";
-        HttpResponse<JsonNode> response = Unirest.post("https://chat.openai.com/api/auth/signin/auth0?prompt=login")
-//                .header("Host", "ask.openai.com")
-                .header("Origin", "https://chat.openai.com")
-                .header("Connection", "keep-alive")
-                .header("Accept", "*/*")
-                .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15")
-                .header("Referer", "https://chat.openai.com/auth/login")
-//                .header("Content-Length", "100")
-                .header("Accept-Language", "en-GB,en-US;q=0.9,en;q=0.8")
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .body(payload)
-                .asJson();
-        if (response.getStatus() == HttpStatus.OK && response.getHeaders().get("Content-Type").get(0).contains("json")) {
-            String url = ((String) response.getBody().getObject().get("url"));
-            System.out.println("url: " + url);
-            return partFour(url);
-        } else if (response.getStatus() == HttpStatus.BAD_REQUEST) {
-            throw new RuntimeException("[OpenAI][3] Bad request from your IP address, try again in a few minutes");
-        } else {
-            throw new RuntimeException("[OpenAI][3] Failed to make the request, Try that again!");
-        }
-
-    }
-
-    /**
-     * We make a GET request to url
-     *
-     * @param url
-     * @return
-     */
-    private String partFour(String url) {
-        HttpResponse<JsonNode> response = Unirest.get(url)
-                .header("Host", "ask.openai.com")
-                .header("Connection", "keep-alive")
-                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-                .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15")
-                .header("Referer", "https://chat.openai.com/")
+    public String ask(String input) {
+        HttpResponse<String> response = Unirest.post(conversationUrl)
+                .header("Authorization", "Bearer " + refreshAndGetAccessToken())
+                .header("Accept", "text/event-stream")
+                .header("Content-Type", "application/json")
+                .header("User-Agent", userAgent)
+                .header("X-Openai-Assistant-App-Id", "")
+                .header("Connection", "close")
                 .header("Accept-Language", "en-US,en;q=0.9")
-                .asJson();
-        if (response.getStatus() == HttpStatus.FOUND) {
-            String state = Pattern.compile("state=(.*)").matcher(response.getBody().toString()).group(1).split("\"")[0];
-            return partFive(state);
-        } else {
-            throw new RuntimeException("[OpenAI][4] Failed to make the request, Try that again!");
-        }
-    }
-
-    /**
-     * WWe use the state to get the login page & check for a captcha
-     *
-     * @param state
-     * @return
-     */
-    private String partFive(String state) {
-        String url = String.format("https://auth0.openai.com/u/login/identifier?state=%s", state);
-        HttpResponse<JsonNode> response = Unirest.get(url)
-//                .header("Host", "ask.openai.com")
-                .header("Connection", "keep-alive")
-                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-                .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15")
-                .header("Referer", "https://chat.openai.com/")
-                .header("Accept-Language", "en-US,en;q=0.9")
-                .asJson();
-        if (response.getStatus() == HttpStatus.OK) {
-            if (Pattern.compile("<img[^>]+alt=\"captcha\"[^>]+>").matcher(response.getBody().toString()).find()) {
-                System.out.println("Captcha detected");
-                throw new RuntimeException("[OpenAI][5] Captcha detected");
+                .header("Referer", "https://chat.openai.com/chat")
+                .body(buildRequestBody(this.parentMessageId, this.conversationId, input))
+                .asString();
+        if (response.isSuccess()) {
+            String[] strings = CharSequenceUtil.subBetweenAll(response.getBody(), "data: {", "}\n");
+            if (strings.length == 0) {
+                throw new RuntimeException("Couldn't get correct response, please try again.");
             }
-            return partSix(state, null);
+            String data = "{" + strings[strings.length - 1] + "}";
+            System.out.println("Response: " + data);
+            JsonObject jsonObject = gson.fromJson(data, JsonObject.class);
+            this.conversationId = jsonObject.get("conversation_id").toString();
+            this.parentMessageId = jsonObject.getAsJsonObject("message").get("id").toString();
+            return jsonObject.getAsJsonObject("message")
+                    .getAsJsonObject("content")
+                    .getAsJsonArray("parts").get(0)
+                    .toString();
         } else {
-            throw new RuntimeException("[OpenAI][5] Failed to make the request, Try that again!");
+            throw new RuntimeException("Looks like the server is either overloaded or down. Try again later.");
         }
     }
 
     /**
-     * // URL encode
+     * build request body when ask for answer
      *
-     * @param string
+     * @param parentMessageId
+     * @param conversationId
+     * @param input
      * @return
      */
-    public static String urlEncode(String string) {
-        return java.net.URLEncoder.encode(string);
+    private String buildRequestBody(String parentMessageId, String conversationId, String input) {
+        JsonObject requestBody = new JsonObject();
+        requestBody.addProperty("action", "variant");
+        requestBody.addProperty("parent_message_id", parentMessageId);
+        requestBody.addProperty("model", "text-davinci-002-render");
+        JsonArray jsonArray = new JsonArray();
+        JsonObject message = new JsonObject();
+        message.addProperty("id", conversationId);
+        message.addProperty("role", "user");
+        JsonObject content = new JsonObject();
+        content.addProperty("content_type", "text");
+        JsonArray parts = new JsonArray();
+        parts.add(input);
+        content.add("parts", parts);
+        message.add("content", content);
+        requestBody.add("messages", jsonArray);
+        return requestBody.toString();
     }
 
     /**
-     * We make a POST request to the login page with the captcha, email
+     * refresh and get access token
      *
-     * @param state
-     * @param captcha
-     * @return
+     * @return access token
      */
-    private String partSix(String state, String captcha) {
-        String url = String.format("https://auth0.openai.com/u/login/identifier?state=%s", state);
-        String emailUrlEncoded = urlEncode(email);
-        String payload = String.format("state=%s&username=%s&captcha=%s&js-available=true" +
-                "&webauthn-available=true&is-brave=false&webauthn-platform-available=true&action" +
-                "=default ", state, emailUrlEncoded, captcha);
-        if (captcha == null) {
-            payload = String.format("state=%s&username=%s&js-available=false&webauthn-available" +
-                            "=true&is-brave=false&webauthn-platform-available=true&action=default ",
-                    state, emailUrlEncoded);
-        }
-        HttpResponse<JsonNode> response = Unirest.post(url)
-//                .header("Host", "ask.openai.com")
-                .header("Connection", "keep-alive")
-                .header("Origin", "https://auth0.openai.com")
-                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-                .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15")
-                .header("Referer", url)
-                .header("Accept-Language", "en-US,en;q=0.9")
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .body(payload)
-                .asJson();
-        if (response.getStatus() == HttpStatus.FOUND) {
-            return partSeven(state);
-        } else {
-            throw new RuntimeException("[OpenAI][6] Email not found, Check your email address and try again!");
-        }
-    }
-
-    /**
-     * We enter the password
-     *
-     * @param state
-     * @return
-     */
-    private String partSeven(String state) {
-        String url = String.format("https://auth0.openai.com/u/login/password?state=%s", state);
-        String emailUrlEncoded = urlEncode(email);
-        String passwordUrlEncoded = urlEncode(password);
-        String payload = String.format("state=%s&username=%s&password=%s&action=default", state, emailUrlEncoded, passwordUrlEncoded);
-
-        HttpResponse<JsonNode> response = Unirest.post(url)
-//                .header("Host", "ask.openai.com")
-                .header("Connection", "keep-alive")
-                .header("Origin", "https://auth0.openai.com")
-                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-                .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15")
-                .header("Referer", url)
-                .header("Accept-Language", "en-US,en;q=0.9")
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .body(payload)
-                .asJson();
-        if (response.getStatus() == HttpStatus.FOUND) {
-            String newState = response.getBody().toString().split("state=")[0].split("\"")[0];
-            return partEight(state, newState);
-        } else {
-            throw new RuntimeException("[OpenAI][7] Password was incorrect or captcha was wrong");
-        }
-    }
-
-    /**
-     * Get access_token and an hour from now on CHATGPT_ACCESS_TOKEN CHATGPT_ACCESS_TOKEN_EXPIRY environment variables
-     *
-     * @param oldState
-     * @param newState
-     * @return
-     */
-    private String partEight(String oldState, String newState) {
-        String url = String.format("https://auth0.openai.com/authorize/resume?state=%s", newState);
-        HttpResponse<JsonNode> response = Unirest.get(url)
-//                .header("Host", "ask.openai.com")
-                .header("Connection", "keep-alive")
-                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-                .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15")
-                .header("Referer", String.format("https://auth0.openai.com/u/login/password?state=%s", oldState))
-                .header("Accept-Language", "en-GB,en-US;q=0.9,en;q=0.8")
-                .asJson();
-        if (response.getStatus() == HttpStatus.OK) {
-            Pattern pattern = Pattern.compile("accessToken\":\"(.*)\"");
-            Matcher matcher = pattern.matcher(response.getBody().toString());
-            if (matcher.find()) {
-                // return access_token and an hour from now on ./classes/auth.json
-                return matcher.group();
+    private String refreshAndGetAccessToken() {
+        if (accessTokenCache.isEmpty() || accessTokenCache.get(accessTokenString) == null) {
+            if (sessionToken == null) {
+                throw new RuntimeException("Please set session token!");
+            }
+            HttpResponse<JsonNode> response = Unirest.get(sessionUrl)
+                    .cookie(cookieName, sessionToken)
+                    .header("User-Agent", userAgent)
+                    .asJson();
+            if (response.isSuccess()) {
+                String accessToken = (String) response.getBody().getObject().get(accessTokenString);
+                System.out.println("Get accessToken: " + accessToken);
+                accessTokenCache.put(accessTokenString, accessToken);
+                return accessToken;
             } else {
-                throw new RuntimeException("[OpenAI][8] While most of the process was successful, " +
-                        "Auth0 didn't issue an access token, Use proxies or retry.");
+                throw new RuntimeException("Session token may have expired");
             }
         } else {
-            throw new RuntimeException("[OpenAI][8] While most of the process was successful, " +
-                    "Auth0 didn't issue an access token, Use proxies or retry.");
+            return accessTokenCache.get(accessTokenString);
         }
     }
+
 }
