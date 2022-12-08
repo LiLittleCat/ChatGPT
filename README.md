@@ -38,7 +38,7 @@ public class Main {
     public static void main(String[] args) {
        ChatGPT chatGPT = new ChatGPT("sessionToken");
        String hello = chatGPT.ask("hello");
-       System.out.println(hello); // will be ""Hello! I'm Assistant, a large language model trained by OpenAI. I'm here to help answer any questions you might have. What can I help you with today?""
+       System.out.println(hello); // will be "Hello! I'm Assistant, a large language model trained by OpenAI. I'm here to help answer any questions you might have. What can I help you with today?"
     }
 }
 ```
@@ -55,3 +55,4 @@ To get a session token:
    ![ChatGPT cookies](./media/session-token.png)
 4. Copy the value for `__Secure-next-auth.session-token` as parameter "sessionToken".
 
+## Happy coding
