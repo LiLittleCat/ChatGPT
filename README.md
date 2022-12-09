@@ -7,7 +7,7 @@ A Java client for the unofficial [ChatGPT](https://chat.openai.com/) API.
 
 ## Download
 
-Download [the latest JAR](https://search.maven.org/remote_content?) or grab via [Maven](http://search.maven.org/):
+Download [the latest JAR](https://search.maven.org/remote_content?g=com.lilittlecat&a=chatgpt&v=LATEST) or grab via [Maven](https://search.maven.org/search?q=g:com.lilittlecat%20AND%20a:chatgpt):
 
 ```xml
 <dependency>
