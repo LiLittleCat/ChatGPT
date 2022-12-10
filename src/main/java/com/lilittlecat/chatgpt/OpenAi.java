@@ -38,12 +38,6 @@ public class OpenAi {
         this(email, password, false, null);
     }
 
-    public static void main(String[] args) {
-        OpenAi openAi = new OpenAi("luoyukongchan@outlook.com", "h9kuVAEueTPQ_CA");
-        openAi.createAccessToken();
-
-    }
-
     public OpenAi(String email, String password, Boolean useProxy, String proxy) {
         this.email = email;
         this.password = password;
