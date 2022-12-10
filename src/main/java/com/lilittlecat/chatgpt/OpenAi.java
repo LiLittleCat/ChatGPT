@@ -1,5 +1,6 @@
 package com.lilittlecat.chatgpt;
 
+import cn.hutool.http.HttpRequest;
 import kong.unirest.HttpResponse;
 import kong.unirest.HttpStatus;
 import kong.unirest.JsonNode;
@@ -44,8 +45,12 @@ public class OpenAi {
         if (useProxy) {
             this.proxy = proxy;
         }
-        Unirest.config().enableCookieManagement(false);
+        Unirest.config()
+                .followRedirects(true)
+                .enableCookieManagement(true);
     }
+
+    private String setCookie = "Set-Cookie";
 
     public boolean tokenExpired() {
         return false;
@@ -57,8 +62,7 @@ public class OpenAi {
 
     private Map<String, String> cookies = new HashMap<>();
 
-    private void parseSetCookie(HttpResponse<JsonNode> response) {
-        List<String> strings = response.getHeaders().get("Set-Cookie");
+    private void parseSetCookie(List<String> strings) {
         if (strings != null && !strings.isEmpty()) {
             for (String string : strings) {
                 String s = string.split(";")[0];
@@ -84,14 +88,13 @@ public class OpenAi {
      */
     public String createAccessToken() {
         HttpResponse<JsonNode> response = Unirest.get("https://chat.openai.com/auth/login")
-//                .header("Host", "ask.openai.com")
                 .header("Accept", "*/*")
                 .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15")
                 .header("Accept-Language", "en-GB,en-US;q=0.9,en;q=0.8")
                 .header("Accept-Encoding", "gzip, deflate, br")
                 .header("Connection", "keep-alive")
                 .asJson();
-        parseSetCookie(response);
+        parseSetCookie(response.getHeaders().get(setCookie));
         if (response.getStatus() == HttpStatus.OK) {
             return partTwo();
         } else {
@@ -106,7 +109,6 @@ public class OpenAi {
      */
     private String partTwo() {
         HttpResponse<JsonNode> response = Unirest.get("https://chat.openai.com/api/auth/csrf")
-//                .header("Host", "ask.openai.com")
                 .header("Accept", "*/*")
                 .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15")
                 .header("Accept-Language", "en-GB,en-US;q=0.9,en;q=0.8")
@@ -115,7 +117,7 @@ public class OpenAi {
                 .header("Referer", "https://chat.openai.com/auth/login")
                 .cookie("cookie", getCookie())
                 .asJson();
-        parseSetCookie(response);
+        parseSetCookie(response.getHeaders().get(setCookie));
         if (response.getStatus() == HttpStatus.OK) {
             String csrfToken = ((String) response.getBody().getObject().get("csrfToken"));
             System.out.println("csrfToken: " + csrfToken);
@@ -134,7 +136,6 @@ public class OpenAi {
     private String partThree(String token) {
         String payload = "callbackUrl=%2F&csrfToken=" + token + "&json=true";
         HttpResponse<JsonNode> response = Unirest.post("https://chat.openai.com/api/auth/signin/auth0?prompt=login")
-//                .header("Host", "ask.openai.com")
                 .header("Origin", "https://chat.openai.com")
                 .header("Connection", "keep-alive")
                 .header("Accept", "*/*")
@@ -146,7 +147,7 @@ public class OpenAi {
                 .cookie("cookie", getCookie())
                 .body(payload)
                 .asJson();
-        parseSetCookie(response);
+        parseSetCookie(response.getHeaders().get(setCookie));
         if (response.getStatus() == HttpStatus.OK && response.getHeaders().get("Content-Type").get(0).contains("json")) {
             String url = ((String) response.getBody().getObject().get("url"));
             System.out.println("url: " + url);
@@ -166,20 +167,22 @@ public class OpenAi {
      * @return
      */
     private String partFour(String url) {
-        HttpResponse<JsonNode> response = Unirest.get(url)
-//                .header("Host", "ask.openai.com")
+        // handle 302 manually
+        try (cn.hutool.http.HttpResponse httpResponse = HttpRequest.get(url)
                 .header("Connection", "keep-alive")
                 .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
                 .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15")
                 .header("Referer", "https://chat.openai.com/")
                 .header("Accept-Language", "en-US,en;q=0.9")
-                .cookie("cookie", getCookie())
-                .asJson();
-        if (response.getStatus() == HttpStatus.FOUND) {
-            String state = Pattern.compile("state=(.*)").matcher(response.getBody().toString()).group(1).split("\"")[0];
-            return partFive(state);
-        } else {
-            throw new RuntimeException("[OpenAI][4] Failed to make the request, Try that again!");
+                .execute()) {
+            Map<String, List<String>> headers = httpResponse.headers();
+            if (httpResponse.getStatus() == HttpStatus.FOUND) {
+                parseSetCookie(headers.get(setCookie));
+                String location = headers.get("Location").get(0);
+                return partFive(location.split("state=")[1]);
+            } else {
+                throw new RuntimeException("[OpenAI][4] Failed to make the request, Try that again!");
+            }
         }
     }
 
@@ -191,19 +194,19 @@ public class OpenAi {
      */
     private String partFive(String state) {
         String url = String.format("https://auth0.openai.com/u/login/identifier?state=%s", state);
-        HttpResponse<JsonNode> response = Unirest.get(url)
-                .header("Host", "ask.openai.com")
+        HttpResponse<String> response = Unirest.get(url)
                 .header("Connection", "keep-alive")
                 .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
                 .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15")
-                .header("Referer", "https://chat.openai.com/")
+//                .header("Referer", "https://chat.openai.com/")
                 .header("Accept-Language", "en-US,en;q=0.9")
-                .asJson();
+                .cookie("cookie", getCookie())
+                .asString();
         if (response.getStatus() == HttpStatus.OK) {
-            if (Pattern.compile("<img[^>]+alt=\"captcha\"[^>]+>").matcher(response.getBody().toString()).find()) {
-                System.out.println("Captcha detected");
-                throw new RuntimeException("[OpenAI][5] Captcha detected");
-            }
+//            if (Pattern.compile("<img[^>]+alt=\"captcha\"[^>]+>").matcher(response.getBody()).find()) {
+//                System.out.println("Captcha detected");
+//                throw new RuntimeException("[OpenAI][5] Captcha detected");
+//            }
             return partSix(state, null);
         } else {
             throw new RuntimeException("[OpenAI][5] Failed to make the request, Try that again!");
@@ -240,8 +243,7 @@ public class OpenAi {
                     "&webauthn-available=true&is-brave=false&webauthn-platform-available=true&action" +
                     "=default ", state, emailUrlEncoded, captcha);
         }
-        HttpResponse<JsonNode> response = Unirest.post(url)
-                .header("Host", "ask.openai.com")
+        HttpResponse<String> response = Unirest.post(url)
                 .header("Connection", "keep-alive")
                 .header("Origin", "https://auth0.openai.com")
                 .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
@@ -250,7 +252,7 @@ public class OpenAi {
                 .header("Accept-Language", "en-US,en;q=0.9")
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .body(payload)
-                .asJson();
+                .asString();
         if (response.getStatus() == HttpStatus.FOUND) {
             return partSeven(state);
         } else {
