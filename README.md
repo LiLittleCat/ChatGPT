@@ -1,5 +1,7 @@
 # ChatGPT
 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.lilittlecat/chatgpt/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.lilittlecat/chatgpt)
+
 A Java client for the unofficial [ChatGPT](https://chat.openai.com/) API.
 
 > Inspired by [PyChatGPT](https://github.com/rawandahmad698/PyChatGPT) and [chatgpt-api](https://github.com/transitive-bullshit/chatgpt-api), thanks a lot.
