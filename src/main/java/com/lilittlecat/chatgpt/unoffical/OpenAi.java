@@ -1,4 +1,4 @@
-package com.lilittlecat.chatgpt;
+package com.lilittlecat.chatgpt.unoffical;
 
 import cn.hutool.http.HttpRequest;
 import kong.unirest.HttpResponse;
@@ -18,16 +18,14 @@ import java.util.regex.Pattern;
  * </p>
  * see: <a href="https://github.com/rawandahmad698/PyChatGPT/blob/master/src/pychatgpt/classes/openai.py">openai.py</a>
  * <p>
+ * Deprecated, use {@link com.lilittlecat.chatgpt.offical.ChatGPT} instead.
  *
  * @author LiLittleCat
  * @link <a href="https://github.com/LiLittleCat">https://github.com/LiLittleCat</a>
  * @since 2022/12/7
  */
+@Deprecated
 public class OpenAi {
-    /*
-     * todo there is Bad Request, set token manually temporarily
-     * todo handle captcha when get access token
-     */
     private String email;
     private String password;
     private Boolean useProxy;

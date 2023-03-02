@@ -1,4 +1,4 @@
-package com.lilittlecat.chatgpt;
+package com.lilittlecat.chatgpt.unoffical;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.google.gson.Gson;
@@ -17,12 +17,14 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * A Java client for the unofficial ChatGPT API.
  * </p>
+ * Deprecated, use {@link com.lilittlecat.chatgpt.offical.ChatGPT} instead.
  *
  * @author LiLittleCat
  * @link <a href="https://github.com/LiLittleCat">https://github.com/LiLittleCat</a>
  * @since 2022/12/7
  */
-public class ChatGPT {
+@Deprecated
+public class UnofficialChatGPT {
 
     private String sessionToken;
 
@@ -55,7 +57,7 @@ public class ChatGPT {
      * @param username       proxy username
      * @param password       proxy password
      */
-    public ChatGPT(String sessionToken, String conversationId, boolean useProxy, String proxy, Integer port, String username, String password) {
+    public UnofficialChatGPT(String sessionToken, String conversationId, boolean useProxy, String proxy, Integer port, String username, String password) {
         this.sessionToken = sessionToken;
         if (conversationId == null) {
             this.conversationId = UUID.randomUUID().toString();
@@ -69,15 +71,15 @@ public class ChatGPT {
         refreshAndGetAccessToken();
     }
 
-    public ChatGPT(String sessionToken) {
+    public UnofficialChatGPT(String sessionToken) {
         this(sessionToken, null, false, null, null, null, null);
     }
 
-    public ChatGPT(String sessionToken, String conversationId) {
+    public UnofficialChatGPT(String sessionToken, String conversationId) {
         this(sessionToken, conversationId, false, null, null, null, null);
     }
 
-    public ChatGPT(String sessionToken, boolean useProxy, String proxy, Integer port) {
+    public UnofficialChatGPT(String sessionToken, boolean useProxy, String proxy, Integer port) {
         this(sessionToken, null, useProxy, proxy, port, null, null);
     }
 

@@ -32,16 +32,15 @@ implementation 'com.lilittlecat:chatgpt:0.1.0'
 >
 > At present, only use by set token manually, and the email and password login is supported subsequently.
 
-
 ```java
-import com.lilittlecat.chatgpt.ChatGPT;
+import com.lilittlecat.chatgpt.unoffical.UnofficialChatGPT;
 
 public class Main {
-    public static void main(String[] args) {
-       ChatGPT chatGPT = new ChatGPT("sessionToken");
-       String hello = chatGPT.ask("hello");
-       System.out.println(hello); // will be "Hello! I'm Assistant, a large language model trained by OpenAI. I'm here to help answer any questions you might have. What can I help you with today?"
-    }
+   public static void main(String[] args) {
+      UnofficialChatGPT unofficialChatGPT = new UnofficialChatGPT("sessionToken");
+      String hello = unofficialChatGPT.ask("hello");
+      System.out.println(hello); // will be "Hello! I'm Assistant, a large language model trained by OpenAI. I'm here to help answer any questions you might have. What can I help you with today?"
+   }
 }
 ```
 
