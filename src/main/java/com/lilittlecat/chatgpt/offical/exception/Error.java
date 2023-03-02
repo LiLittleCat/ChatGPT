@@ -8,7 +8,7 @@ import lombok.Getter;
  * </p>
  * see: <a href=https://platform.openai.com/docs/guides/error-codes/api-errors>https://platform.openai.com/docs/guides/error-codes/api-errors</a>
  *
- * @author Liu Yi
+ * @author <a href="https://github.com/LiLittleCat">LiLittleCat</a>
  * @since 2023/3/2
  */
 @Getter
@@ -22,7 +22,7 @@ public enum Error {
     ENGINE_IS_CURRENTLY_OVERLOADED(429, "The engine is currently overloaded, please try again later"),
     SERVER_HAD_AN_ERROR(500, "The server had an error while processing your request"),
 
-    ;;
+    ;
 
     private final Integer code;
     private final String msg;

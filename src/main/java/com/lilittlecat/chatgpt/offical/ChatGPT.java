@@ -2,14 +2,15 @@ package com.lilittlecat.chatgpt.offical;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lilittlecat.chatgpt.offical.entity.ChatCompletionRequestBody;
-import com.lilittlecat.chatgpt.offical.entity.Constant;
-import com.lilittlecat.chatgpt.offical.entity.Message;
-import com.lilittlecat.chatgpt.offical.entity.Model;
+import com.lilittlecat.chatgpt.offical.entity.*;
+import com.lilittlecat.chatgpt.offical.exception.BizException;
+import com.lilittlecat.chatgpt.offical.exception.Error;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,11 +27,29 @@ import static com.lilittlecat.chatgpt.offical.entity.Constant.DEFAULT_USER;
 @Slf4j
 public class ChatGPT {
     private final String apiKey;
+    protected OkHttpClient client;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    protected OkHttpClient client = new OkHttpClient();
 
     public ChatGPT(String apiKey) {
         this.apiKey = apiKey;
+        this.client = new OkHttpClient();
+    }
+
+    public ChatGPT(String apiKey, OkHttpClient client) {
+        this.apiKey = apiKey;
+        this.client = client;
+    }
+
+    public ChatGPT(String apiKey, Proxy proxy) {
+        this.apiKey = apiKey;
+        client = new OkHttpClient.Builder().proxy(proxy).build();
+    }
+
+    public ChatGPT(String apiKey, String proxyHost, int proxyPort) {
+        this.apiKey = apiKey;
+        client = new OkHttpClient.Builder().
+                proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort)))
+                .build();
     }
 
 
@@ -40,11 +59,11 @@ public class ChatGPT {
 
     private String buildRequestBody(String model, String role, String content) {
         try {
-            List<Message> message = new ArrayList<>();
-            message.add(Message.builder().role(role).content(content).build());
+            List<Message> messages = new ArrayList<>();
+            messages.add(Message.builder().role(role).content(content).build());
             ChatCompletionRequestBody requestBody = ChatCompletionRequestBody.builder()
                     .model(model)
-                    .messages(objectMapper.writeValueAsString(message))
+                    .messages(messages)
                     .build();
             return objectMapper.writeValueAsString(requestBody);
         } catch (JsonProcessingException e) {
@@ -52,7 +71,15 @@ public class ChatGPT {
         }
     }
 
-    public String ask(String model, String role, String content) {
+    /**
+     * ask for response message
+     *
+     * @param model
+     * @param role
+     * @param content
+     * @return ChatCompletionResponseBody
+     */
+    public ChatCompletionResponseBody askOriginal(String model, String role, String content) {
         RequestBody body = RequestBody.create(buildRequestBody(model, role, content), MediaType.get("application/json; charset=utf-8"));
         Request request = new Request.Builder()
                 .url(Constant.CHAT_COMPLETION_API_URL)
@@ -61,16 +88,41 @@ public class ChatGPT {
                 .build();
 
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful() || response.body() == null) {
-                log.error("Request failed: {}, please try again", response.body().string());
+            if (!response.isSuccessful()) {
+                if (response.body() == null) {
+                    log.error("Request failed: {}, please try again", response.message());
+                    throw new BizException(response.code(), "Request failed");
+                } else {
+                    log.error("Request failed: {}, please try again", response.body().string());
+                    throw new BizException(response.code(), response.body().string());
+                }
             } else {
-                return response.body().toString();
+                assert response.body() != null;
+                String bodyString = response.body().string();
+                return objectMapper.readValue(bodyString, ChatCompletionResponseBody.class);
             }
-            return response.body().string();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log.error("Request failed: {}", e.getMessage());
+            throw new BizException(Error.SERVER_HAD_AN_ERROR.getCode(), e.getMessage());
         }
+    }
 
+    /**
+     * ask for response message
+     *
+     * @param model
+     * @param role
+     * @param content
+     * @return String message
+     */
+    public String ask(String model, String role, String content) {
+        ChatCompletionResponseBody chatCompletionResponseBody = askOriginal(model, role, content);
+        List<ChatCompletionResponseBody.Choice> choices = chatCompletionResponseBody.getChoices();
+        StringBuilder result = new StringBuilder();
+        for (ChatCompletionResponseBody.Choice choice : choices) {
+            result.append(choice.getMessage().getContent());
+        }
+        return result.toString();
     }
 
 }

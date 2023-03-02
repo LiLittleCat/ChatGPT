@@ -1,21 +1,20 @@
 package com.lilittlecat.chatgpt.offical.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 /**
  * <p>
  * Message
  * </p>
  *
- * @author Liu Yi
+ * @author <a href="https://github.com/LiLittleCat">LiLittleCat</a>
  * @since 2023/3/2
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Message {
     @JsonProperty(value = "role")
     public String role;

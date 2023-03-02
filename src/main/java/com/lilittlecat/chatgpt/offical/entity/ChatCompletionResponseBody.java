@@ -1,8 +1,10 @@
 package com.lilittlecat.chatgpt.offical.entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -17,6 +19,8 @@ import java.util.List;
  */
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ChatCompletionResponseBody {
 
     @JsonProperty(value = "id")
@@ -24,7 +28,9 @@ public class ChatCompletionResponseBody {
     @JsonProperty(value = "object")
     public String object;
     @JsonProperty(value = "created")
-    public int created;
+    public Long created;
+    @JsonProperty(value = "model")
+    public String model;
     @JsonProperty(value = "choices")
     public List<Choice> choices;
     @JsonProperty(value = "usage")
@@ -35,7 +41,7 @@ public class ChatCompletionResponseBody {
         @JsonProperty(value = "index")
         public Integer index;
         @JsonProperty(value = "message")
-        public List<Message> message;
+        public Message message;
         @JsonProperty(value = "finish_reason")
         public String finishReason;
     }

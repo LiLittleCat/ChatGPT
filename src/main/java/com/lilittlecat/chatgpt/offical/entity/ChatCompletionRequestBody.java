@@ -1,5 +1,6 @@
 package com.lilittlecat.chatgpt.offical.entity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
@@ -18,6 +19,7 @@ import java.util.Map;
  */
 @Data
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ChatCompletionRequestBody {
     /**
      * Required
@@ -34,7 +36,7 @@ public class ChatCompletionRequestBody {
      * <a href=https://platform.openai.com/docs/guides/chat/introduction>chat format</a>.
      */
     @JsonProperty(value = "messages")
-    private String messages;
+    private List<Message> messages;
 
     /**
      * Optional
