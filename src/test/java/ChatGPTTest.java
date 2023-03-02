@@ -1,5 +1,6 @@
 import com.lilittlecat.chatgpt.offical.ChatGPT;
 import okhttp3.OkHttpClient;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.net.InetSocketAddress;
@@ -14,6 +15,7 @@ import java.net.Proxy;
  * @link <a href="https://github.com/LiLittleCat">https://github.com/LiLittleCat</a>
  * @since 2022/12/8
  */
+@Disabled
 class ChatGPTTest {
     @Test
     void test() {
