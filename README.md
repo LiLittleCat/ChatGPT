@@ -10,6 +10,7 @@ A Java client for the [ChatGPT API](https://platform.openai.com/docs/guides/chat
 
 ### 1.0.0
 - Use official API with model `gpt-3.5-turbo`
+- Support proxy
 
 ### 0.1.0
 - Initial release
