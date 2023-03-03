@@ -1,8 +1,10 @@
 # ChatGPT Java
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.lilittlecat/chatgpt/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.lilittlecat/chatgpt)
+[![Maven Central](https://img.shields.io/maven-central/v/com.lilittlecat/chatgpt?style=for-the-badge)](https://central.sonatype.com/artifact/com.lilittlecat/chatgpt/1.0.0)
 
-A Java client for the official [ChatGPT API](https://platform.openai.com/docs/guides/chat).
+
+
+A Java client for the [ChatGPT API](https://platform.openai.com/docs/guides/chat).
 
 ## Change Log
 
@@ -16,7 +18,7 @@ A Java client for the official [ChatGPT API](https://platform.openai.com/docs/gu
 
 ## Download
 
-Download [the latest JAR](https://search.maven.org/remote_content?g=com.lilittlecat&a=chatgpt&v=LATEST) or grab via [Maven](https://central.sonatype.dev/artifact/com.lilittlecat/chatgpt/0.1.0):
+Download [the latest JAR](https://search.maven.org/remote_content?g=com.lilittlecat&a=chatgpt&v=LATEST) or grab via [Maven](https://central.sonatype.dev/artifact/com.lilittlecat/chatgpt/1.0.0):
 
 ```xml
 <dependency>
