@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lilittlecat.chatgpt.offical.entity.*;
 import com.lilittlecat.chatgpt.offical.exception.BizException;
 import com.lilittlecat.chatgpt.offical.exception.Error;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
@@ -14,7 +15,7 @@ import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.lilittlecat.chatgpt.offical.entity.Constant.DEFAULT_USER;
+import static com.lilittlecat.chatgpt.offical.entity.Constant.*;
 
 /**
  * <p>
@@ -25,8 +26,10 @@ import static com.lilittlecat.chatgpt.offical.entity.Constant.DEFAULT_USER;
  * @since 2023/3/2
  */
 @Slf4j
+@Builder
 public class ChatGPT {
     private final String apiKey;
+    private String apiHost = DEFAULT_CHAT_COMPLETION_API_URL;
     protected OkHttpClient client;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -52,9 +55,47 @@ public class ChatGPT {
                 .build();
     }
 
+    public ChatGPT(String apiHost, String apiKey) {
+        this.apiHost = apiHost;
+        this.apiKey = apiKey;
+        this.client = new OkHttpClient();
+    }
+
+    public ChatGPT(String apiHost, String apiKey, OkHttpClient client) {
+        this.apiHost = apiHost;
+        this.apiKey = apiKey;
+        this.client = client;
+    }
+
+    public ChatGPT(String apiHost, String apiKey, Proxy proxy) {
+        this.apiHost = apiHost;
+        this.apiKey = apiKey;
+        client = new OkHttpClient.Builder().proxy(proxy).build();
+    }
+
+    public ChatGPT(String apiHost, String apiKey, String proxyHost, int proxyPort) {
+        this.apiHost = apiHost;
+        this.apiKey = apiKey;
+        client = new OkHttpClient.Builder().
+                proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort)))
+                .build();
+    }
+
 
     public String ask(String input) {
-        return ask(Model.GPT_3_5_TURBO.getName(), DEFAULT_USER, input);
+        return ask(DEFAULT_MODEL.getName(), DEFAULT_USER, input);
+    }
+
+    public String ask(String user, String input) {
+        return ask(DEFAULT_MODEL.getName(), user, input);
+    }
+
+    public String ask(Model model, String input) {
+        return ask(model.getName(), DEFAULT_USER, input);
+    }
+
+    public String ask(Model model, String user, String input) {
+        return ask(model.getName(), user, input);
     }
 
     private String buildRequestBody(String model, String role, String content) {
@@ -82,7 +123,7 @@ public class ChatGPT {
     public ChatCompletionResponseBody askOriginal(String model, String role, String content) {
         RequestBody body = RequestBody.create(buildRequestBody(model, role, content), MediaType.get("application/json; charset=utf-8"));
         Request request = new Request.Builder()
-                .url(Constant.CHAT_COMPLETION_API_URL)
+                .url(apiHost)
                 .header("Authorization", "Bearer " + apiKey)
                 .post(body)
                 .build();

@@ -39,10 +39,16 @@ class ChatGPTTest {
         System.out.println(hello);
     }
 
-
     @Test
     void testUseOfferedClient() {
         ChatGPT chatGPT = new ChatGPT("YOUR API KEY", new OkHttpClient());
+        String hello = chatGPT.ask("Hello");
+        System.out.println(hello);
+    }
+
+    @Test
+    void useCustomHost() {
+        ChatGPT chatGPT = new ChatGPT("https://your.api.host","YOUR API KEY");
         String hello = chatGPT.ask("Hello");
         System.out.println(hello);
     }
