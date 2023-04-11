@@ -8,6 +8,10 @@ A Java client for the [ChatGPT API](https://platform.openai.com/docs/guides/chat
 
 ## Change Log
 
+### 1.0.1
+- Support GPT-4
+- Add custom API host
+
 ### 1.0.0
 - Use official API with model `gpt-3.5-turbo`
 - Support proxy
