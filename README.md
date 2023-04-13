@@ -29,14 +29,14 @@ Download [the latest JAR](https://search.maven.org/remote_content?g=com.lilittle
 <dependency>
   <groupId>com.lilittlecat</groupId>
   <artifactId>chatgpt</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
 </dependency>
 ```
 
 or Gradle:
 
 ```groovy
-implementation 'com.lilittlecat:chatgpt:1.0.0'
+implementation 'com.lilittlecat:chatgpt:1.0.1'
 ```
 
 ## Usage
