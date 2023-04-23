@@ -95,8 +95,16 @@ public class ChatGPT {
         return ask(model.getName(), DEFAULT_USER, input);
     }
 
-    public String ask(Model model, List<Message> message) {
-        ChatCompletionResponseBody chatCompletionResponseBody = askOriginal(model.getName(), message);
+    public String ask(List<Message> messages) {
+        return ask(DEFAULT_MODEL.getName(), messages);
+    }
+
+    public String ask(Model model, List<Message> messages) {
+        return ask(model.getName(), messages);
+    }
+
+    public String ask(String model, List<Message> message) {
+        ChatCompletionResponseBody chatCompletionResponseBody = askOriginal(model, message);
         List<ChatCompletionResponseBody.Choice> choices = chatCompletionResponseBody.getChoices();
         StringBuilder result = new StringBuilder();
         for (ChatCompletionResponseBody.Choice choice : choices) {
@@ -124,7 +132,22 @@ public class ChatGPT {
     /**
      * ask for response message
      *
-     * @param model
+     * @param model model
+     * @param role  role
+     * @param input input
+     * @return ChatCompletionResponseBody
+     */
+    public ChatCompletionResponseBody askOriginal(String model, String role, String input) {
+        return askOriginal(model, Collections.singletonList(Message.builder()
+                .role(role)
+                .content(input)
+                .build()));
+    }
+
+    /**
+     * ask for response message
+     *
+     * @param model    model
      * @param messages messages
      * @return ChatCompletionResponseBody
      */
@@ -159,9 +182,9 @@ public class ChatGPT {
     /**
      * ask for response message
      *
-     * @param model
-     * @param role
-     * @param content
+     * @param model model
+     * @param role role
+     * @param content content
      * @return String message
      */
     public String ask(String model, String role, String content) {

@@ -1,10 +1,13 @@
 import com.lilittlecat.chatgpt.offical.ChatGPT;
+import com.lilittlecat.chatgpt.offical.entity.Message;
 import okhttp3.OkHttpClient;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>
@@ -51,6 +54,24 @@ class ChatGPTTest {
         ChatGPT chatGPT = new ChatGPT("https://your.api.host","YOUR API KEY");
         String hello = chatGPT.ask("Hello");
         System.out.println(hello);
+    }
+
+    @Test
+    void useMessages() {
+        ChatGPT chatGPT = new ChatGPT("YOUR API KEY");
+        List<Message> messages = new ArrayList<>();
+
+        messages.add(Message.builder()
+                .role("system")
+                .content("You are a instance of a Java API Wrapper for the Open AI API")
+                .build());
+
+        messages.add(Message.builder()
+                .role("user")
+                .content("What is this?")
+                .build());
+
+        System.out.println(chatGPT.ask(messages));
     }
 }
 
