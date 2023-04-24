@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.lilittlecat.chatgpt.offical.entity.Constant.*;
@@ -94,14 +95,30 @@ public class ChatGPT {
         return ask(model.getName(), DEFAULT_USER, input);
     }
 
+    public String ask(List<Message> messages) {
+        return ask(DEFAULT_MODEL.getName(), messages);
+    }
+
+    public String ask(Model model, List<Message> messages) {
+        return ask(model.getName(), messages);
+    }
+
+    public String ask(String model, List<Message> message) {
+        ChatCompletionResponseBody chatCompletionResponseBody = askOriginal(model, message);
+        List<ChatCompletionResponseBody.Choice> choices = chatCompletionResponseBody.getChoices();
+        StringBuilder result = new StringBuilder();
+        for (ChatCompletionResponseBody.Choice choice : choices) {
+            result.append(choice.getMessage().getContent());
+        }
+        return result.toString();
+    }
+
     public String ask(Model model, String user, String input) {
         return ask(model.getName(), user, input);
     }
 
-    private String buildRequestBody(String model, String role, String content) {
+    private String buildRequestBody(String model, List<Message> messages) {
         try {
-            List<Message> messages = new ArrayList<>();
-            messages.add(Message.builder().role(role).content(content).build());
             ChatCompletionRequestBody requestBody = ChatCompletionRequestBody.builder()
                     .model(model)
                     .messages(messages)
@@ -115,13 +132,27 @@ public class ChatGPT {
     /**
      * ask for response message
      *
-     * @param model
-     * @param role
-     * @param content
+     * @param model model
+     * @param role  role
+     * @param input input
      * @return ChatCompletionResponseBody
      */
-    public ChatCompletionResponseBody askOriginal(String model, String role, String content) {
-        RequestBody body = RequestBody.create(buildRequestBody(model, role, content), MediaType.get("application/json; charset=utf-8"));
+    public ChatCompletionResponseBody askOriginal(String model, String role, String input) {
+        return askOriginal(model, Collections.singletonList(Message.builder()
+                .role(role)
+                .content(input)
+                .build()));
+    }
+
+    /**
+     * ask for response message
+     *
+     * @param model    model
+     * @param messages messages
+     * @return ChatCompletionResponseBody
+     */
+    public ChatCompletionResponseBody askOriginal(String model, List<Message> messages) {
+        RequestBody body = RequestBody.create(buildRequestBody(model, messages), MediaType.get("application/json; charset=utf-8"));
         Request request = new Request.Builder()
                 .url(apiHost)
                 .header("Authorization", "Bearer " + apiKey)
@@ -151,13 +182,16 @@ public class ChatGPT {
     /**
      * ask for response message
      *
-     * @param model
-     * @param role
-     * @param content
+     * @param model model
+     * @param role role
+     * @param content content
      * @return String message
      */
     public String ask(String model, String role, String content) {
-        ChatCompletionResponseBody chatCompletionResponseBody = askOriginal(model, role, content);
+        ChatCompletionResponseBody chatCompletionResponseBody = askOriginal(model, Collections.singletonList(Message.builder()
+                .role(role)
+                .content(content)
+                .build()));
         List<ChatCompletionResponseBody.Choice> choices = chatCompletionResponseBody.getChoices();
         StringBuilder result = new StringBuilder();
         for (ChatCompletionResponseBody.Choice choice : choices) {
