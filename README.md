@@ -8,6 +8,9 @@ A Java client for the [ChatGPT API](https://platform.openai.com/docs/guides/chat
 
 ## Change Log
 
+### 1.0.2
+- Support message history
+
 ### 1.0.1
 - Support GPT-4
 - Add custom API host
