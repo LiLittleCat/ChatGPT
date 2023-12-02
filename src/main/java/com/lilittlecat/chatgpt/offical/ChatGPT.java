@@ -32,7 +32,7 @@ public class ChatGPT {
     private final String apiKey;
     private String apiHost = DEFAULT_CHAT_COMPLETION_API_URL;
     protected OkHttpClient client;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = DEFAULT_OBJECT_MAPPER;
 
     public ChatGPT(String apiKey) {
         this.apiKey = apiKey;
@@ -62,10 +62,11 @@ public class ChatGPT {
         this.client = new OkHttpClient();
     }
 
-    public ChatGPT(String apiHost, String apiKey, OkHttpClient client) {
+    public ChatGPT(String apiHost, String apiKey, OkHttpClient client, ObjectMapper objectMapper) {
         this.apiHost = apiHost;
         this.apiKey = apiKey;
         this.client = client;
+        this.objectMapper = objectMapper;
     }
 
     public ChatGPT(String apiHost, String apiKey, Proxy proxy) {

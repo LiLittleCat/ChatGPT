@@ -1,5 +1,8 @@
 package com.lilittlecat.chatgpt.offical.entity;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * <p>
  * Constants
@@ -21,4 +24,5 @@ public class Constant {
     public static final String DEFAULT_CHAT_COMPLETION_API_URL = "https://api.openai.com/v1/chat/completions";
     public static final String DEFAULT_USER = "user";
     public static final Model DEFAULT_MODEL = Model.GPT_3_5_TURBO;
+    public static final ObjectMapper DEFAULT_OBJECT_MAPPER = new ObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 }
