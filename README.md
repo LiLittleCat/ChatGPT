@@ -8,6 +8,10 @@ A Java client for the [ChatGPT API](https://platform.openai.com/docs/guides/chat
 
 ## Change Log
 
+### 1.0.3 - 2023-12-04
+
+- fix [#17](https://github.com/LiLittleCat/ChatGPT/issues/17)
+
 ### 1.0.2 - 2023-04-24
 - Support message history
 

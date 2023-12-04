@@ -6,7 +6,7 @@
 
     <groupId>com.lilittlecat</groupId>
     <artifactId>chatgpt</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <name>ChatGPT</name>
     <description>A Java client for the ChatGPT API.</description>
 
@@ -91,7 +91,7 @@
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-core</artifactId>
-            <version>5.8.10</version>
+            <version>5.8.11</version>
         </dependency>
         <dependency>
             <groupId>cn.hutool</groupId>
@@ -106,17 +106,17 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.5</version>
+            <version>4.5.13</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>fluent-hc</artifactId>
-            <version>4.5.5</version>
+            <version>4.5.13</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpmime</artifactId>
-            <version>4.5.5</version>
+            <version>4.5.13</version>
         </dependency>
     </dependencies>
 
