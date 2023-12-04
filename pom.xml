@@ -6,7 +6,7 @@
 
     <groupId>com.lilittlecat</groupId>
     <artifactId>chatgpt</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <name>ChatGPT</name>
     <description>A Java client for the ChatGPT API.</description>
 
