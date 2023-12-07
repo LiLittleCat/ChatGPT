@@ -1,6 +1,6 @@
 # ChatGPT Java
 
-[![Maven Central](https://img.shields.io/maven-central/v/com.lilittlecat/chatgpt?style=for-the-badge)](https://central.sonatype.com/artifact/com.lilittlecat/chatgpt/1.0.0)
+[![Maven Central](https://img.shields.io/maven-central/v/com.lilittlecat/chatgpt?style=for-the-badge)](https://central.sonatype.com/artifact/com.lilittlecat/chatgpt)
 
 
 
